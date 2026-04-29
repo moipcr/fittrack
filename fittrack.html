@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitTrack - Seguimiento Personal</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #6c5ce7;
+            --primary-light: #a29bfe;
+            --accent: #00cec9;
+            --bg: #0f0f1a;
+            --bg-card: #1a1a2e;
+            --bg-input: #16213e;
+            --text: #e0e0e0;
+            --text-muted: #8892b0;
+            --border: #2d2d4a;
+            --success: #00b894;
+            --danger: #e17055;
+            --warning: #fdcb6e;
+            --gradient: linear-gradient(135deg, #6c5ce7, #00cec9);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(ellipse at 20% 50%, rgba(108,92,231,0.08) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 20%, rgba(0,206,201,0.06) 0%, transparent 50%);
+            z-index: -1;
+            animation: bgShift 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes bgShift {
+            0% { transform: translate(0,0) rotate(0deg); }
+            100% { transform: translate(-5%,-5%) rotate(3deg); }
+        }
+
+        .app-container { max-width: 900px; margin: 0 auto; padding: 20px; min-height: 100vh; }
+
+        header { text-align: center; padding: 40px 0 30px; }
+        header h1 {
+            font-size: 2.8rem; font-weight: 800; background: var(--gradient);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        header p { color: var(--text-muted); margin-top: 8px; font-size: 1.05rem; }
+
+        .tabs {
+            display: flex; gap: 6px; margin-bottom: 24px; background: var(--bg-card);
+            border-radius: 16px; padding: 6px; border: 1px solid var(--border);
+        }
+        .tab-btn {
+            flex: 1; padding: 14px 20px; border: none; background: transparent;
+            color: var(--text-muted); font-size: 0.95rem; font-weight: 600;
+            border-radius: 12px; cursor: pointer; transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .tab-btn:hover { color: var(--text); background: rgba(108,92,231,0.1); }
+        .tab-btn.active { background: var(--gradient); color: white; box-shadow: 0 4px 20px rgba(108,92,231,0.4); }
+
+        .tab-content { display: none; animation: fadeIn 0.4s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card {
+            background: var(--bg-card); border-radius: 20px; padding: 32px;
+            border: 1px solid var(--border); box-shadow: var(--shadow); margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 1.3rem; font-weight: 700; margin-bottom: 24px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .card-title .icon {
+            width: 36px; height: 36px; background: var(--gradient); border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+        }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group.full-width { grid-column: 1 / -1; }
+        .form-group label {
+            font-size: 0.85rem; font-weight: 600; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            padding: 14px 18px; background: var(--bg-input); border: 2px solid var(--border);
+            border-radius: 12px; color: var(--text); font-size: 1rem; font-family: inherit;
+            transition: all 0.3s ease; outline: none;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            border-color: var(--primary); box-shadow: 0 0 0 4px rgba(108,92,231,0.15);
+        }
+        .form-group input.input-error {
+            border-color: var(--danger) !important;
+            box-shadow: 0 0 0 4px rgba(225,112,85,0.15) !important;
+        }
+        .form-group textarea { resize: vertical; min-height: 120px; }
+        .form-group input::placeholder, .form-group textarea::placeholder { color: #4a4a6a; }
+        .error-msg { color: var(--danger); font-size: 0.75rem; min-height: 16px; margin-top: 2px; }
+
+        .btn {
+            padding: 14px 32px; border: none; border-radius: 12px; font-size: 1rem;
+            font-weight: 700; cursor: pointer; transition: all 0.3s ease;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit;
+        }
+        .btn-primary {
+            background: var(--gradient); color: white; box-shadow: 0 2px 10px rgba(108,92,231,0.3);
+            padding: 10px 28px; font-size: 0.9rem; margin-top: 24px; width: auto;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(108,92,231,0.4); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-sm { padding: 8px 16px; font-size: 0.8rem; border-radius: 8px; }
+        .btn-danger { background: rgba(225,112,85,0.15); color: var(--danger); border: 1px solid rgba(225,112,85,0.3); }
+        .btn-danger:hover { background: rgba(225,112,85,0.25); }
+        .btn-edit { background: rgba(108,92,231,0.15); color: var(--primary-light); border: 1px solid rgba(108,92,231,0.3); }
+        .btn-edit:hover { background: rgba(108,92,231,0.25); }
+
+        .chart-container { position: relative; width: 100%; height: 350px; margin: 20px 0; }
+        .chart-container canvas { width: 100% !important; height: 100% !important; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card {
+            background: var(--bg-input); border-radius: 14px; padding: 20px; text-align: center;
+            border: 1px solid var(--border); transition: transform 0.3s ease;
+        }
+        .stat-card:hover { transform: translateY(-4px); }
+        .stat-card .stat-value {
+            font-size: 1.8rem; font-weight: 800; background: var(--gradient);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .stat-card .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+        .stat-card .stat-change { font-size: 0.75rem; margin-top: 6px; font-weight: 600; }
+        .stat-change.positive { color: var(--success); }
+        .stat-change.negative { color: var(--danger); }
+
+        .entries-list { display: flex; flex-direction: column; gap: 12px; }
+        .entry-item {
+            background: var(--bg-input); border-radius: 16px; padding: 20px 24px;
+            border: 1px solid var(--border); transition: all 0.3s ease; position: relative; overflow: hidden;
+        }
+        .entry-item::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+            background: var(--gradient); opacity: 0; transition: opacity 0.3s ease;
+        }
+        .entry-item:hover { border-color: var(--primary); box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+        .entry-item:hover::before { opacity: 1; }
+
+        .entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .entry-date { font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
+        .entry-date .day-badge {
+            background: var(--gradient); color: white; padding: 4px 12px;
+            border-radius: 20px; font-size: 0.8rem;
+        }
+        .entry-metrics { display: flex; gap: 20px; flex-wrap: wrap; }
+        .metric { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; }
+        .metric .metric-icon {
+            width: 28px; height: 28px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; font-size: 0.85rem;
+        }
+        .metric .metric-icon.weight { background: rgba(108,92,231,0.15); color: var(--primary-light); }
+        .metric .metric-icon.height { background: rgba(0,206,201,0.15); color: var(--accent); }
+        .metric .metric-icon.bmi { background: rgba(253,203,110,0.15); color: var(--warning); }
+        .metric .metric-value { font-weight: 700; }
+
+        .entry-notes {
+            margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
+            color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; font-style: italic;
+        }
+        .entry-actions { display: flex; gap: 8px; }
+
+        .date-filter { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .date-filter input {
+            padding: 10px 16px; background: var(--bg-input); border: 2px solid var(--border);
+            border-radius: 10px; color: var(--text); font-family: inherit; outline: none; transition: border-color 0.3s ease;
+        }
+        .date-filter input:focus { border-color: var(--primary); }
+        .date-filter label { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .empty-state .empty-icon { font-size: 4rem; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state p { font-size: 1.1rem; }
+
+        .toast {
+            position: fixed; bottom: 30px; right: 30px; padding: 16px 24px; border-radius: 12px;
+            color: white; font-weight: 600; box-shadow: var(--shadow); z-index: 10000;
+            transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.68,-0.55,0.265,1.55);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .toast.show { transform: translateX(0); }
+        .toast.success { background: linear-gradient(135deg, #00b894, #00cec9); }
+        .toast.error { background: linear-gradient(135deg, #e17055, #d63031); }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center; z-index: 5000;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: var(--bg-card); border-radius: 24px; padding: 36px; max-width: 500px; width: 90%;
+            border: 1px solid var(--border); box-shadow: var(--shadow); animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .modal h3 { font-size: 1.3rem; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
+        .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+        .modal-actions .btn { flex: 1; margin-top: 0; }
+
+        .bmi-indicator { font-size: 0.75rem; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+        .bmi-underweight { background: rgba(116,185,255,0.2); color: #74b9ff; }
+        .bmi-normal { background: rgba(0,184,148,0.2); color: #00b894; }
+        .bmi-overweight { background: rgba(253,203,110,0.2); color: #fdcb6e; }
+        .bmi-obese { background: rgba(225,112,85,0.2); color: #e17055; }
+
+        .bmi-live {
+            font-size: 0.85rem; margin-top: 8px; padding: 8px 14px;
+            border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .bmi-live.normal { background: rgba(0,184,148,0.15); color: #00b894; }
+        .bmi-live.underweight { background: rgba(116,185,255,0.15); color: #74b9ff; }
+        .bmi-live.overweight { background: rgba(253,203,110,0.15); color: #fdcb6e; }
+        .bmi-live.obese { background: rgba(225,112,85,0.15); color: #e17055; }
+
+        .char-counter { font-size: 0.75rem; color: var(--text-muted); text-align: right; margin-top: 2px; }
+        .char-counter.warn { color: var(--warning); }
+        .char-counter.danger { color: var(--danger); }
+
+        .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+        .pagination button {
+            padding: 10px 16px; background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: 10px; color: var(--text-muted); cursor: pointer; font-weight: 600;
+            transition: all 0.3s ease; font-family: inherit;
+        }
+        .pagination button:hover:not(:disabled) { border-color: var(--primary); color: var(--text); }
+        .pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+        .pagination button.active { background: var(--gradient); color: white; border-color: transparent; }
+
+        .search-status { font-size: 0.8rem; color: var(--text-muted); margin-left: auto; }
+
+        @media (max-width: 768px) {
+            .app-container { padding: 12px; }
+            header h1 { font-size: 2rem; }
+            .form-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .card { padding: 20px; }
+            .entry-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+            .entry-metrics { gap: 12px; }
+            .tab-btn { font-size: 0.8rem; padding: 12px 10px; }
+            .tab-btn span.tab-text { display: none; }
+            .date-filter { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+    <div class="toast" id="toast"></div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modalContent"></div>
+    </div>
+
+    <div class="app-container">
+        <header>
+            <h1>FitTrack</h1>
+            <p>Tu seguimiento personal de peso y altura</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('log')">
+                <span>📝</span><span class="tab-text">Registrar</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('history')">
+                <span>📊</span><span class="tab-text">Historial</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('stats')">
+                <span>📈</span><span class="tab-text">Estadísticas</span>
+            </button>
+        </div>
+
+        <div class="tab-content active" id="tab-log">
+            <div class="card">
+                <div class="card-title"><div class="icon">📋</div>Registrar datos del día</div>
+                <form id="logForm" onsubmit="return saveEntry(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Fecha</label>
+                            <input type="date" id="entryDate" required oninput="validateForm()">
+                            <button type="button" class="btn btn-sm" style="background: var(--bg-input); color: var(--text); border: 1px solid var(--border); margin-top: 4px;" onclick="setTodayDate()">📅 Hoy</button>
+                            <div class="error-msg" id="dateError"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Peso (kg)</label>
+                            <input type="number" id="entryWeight" step="0.01" min="20" max="400" placeholder="75.5" required oninput="validateForm()">
+                            <div class="error-msg" id="weightError"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Altura (cm)</label>
+                            <input type="number" id="entryHeight" step="0.1" min="50" max="300" placeholder="175" required oninput="validateForm()">
+                            <div class="error-msg" id="heightError"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>¿Cómo te sientes?</label>
+                            <select id="entryMood">
+                                <option value="">Seleccionar...</option>
+                                <option value="🔥 Excelente">🔥 Excelente</option>
+                                <option value="😊 Bien">😊 Bien</option>
+                                <option value="😐 Regular">😐 Regular</option>
+                                <option value="😔 Mal">😔 Mal</option>
+                                <option value="😴 Cansado">😴 Cansado</option>
+                                <option value="💪 Fuerte">💪 Fuerte</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Notas del día</label>
+                            <textarea id="entryNotes" placeholder="Escribe cómo te sientes, qué comiste, si hiciste ejercicio, cómo te sientes físicamente..." maxlength="2000" oninput="validateForm(); updateCharCounter()"></textarea>
+                            <div class="char-counter" id="charCounter">0 / 2000</div>
+                            <div class="error-msg" id="notesError"></div>
+                        </div>
+                    </div>
+                    <div id="liveBmi" style="text-align:center; margin-top: 8px;"></div>
+                    <div style="text-align: center;">
+                        <button type="submit" class="btn btn-primary" id="saveBtn"><span>💾</span> Guardar registro</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-history">
+            <div class="card">
+                <div class="card-title"><div class="icon">📅</div>Historial de registros</div>
+                <div class="date-filter">
+                    <div><label>Desde:</label><input type="date" id="filterFrom"></div>
+                    <div><label>Hasta:</label><input type="date" id="filterTo"></div>
+                    <div><label>Buscar:</label><input type="text" id="filterSearch" placeholder="Notas..." oninput="debouncedSearch()"></div>
+                    <button class="btn btn-sm btn-danger" onclick="clearFilters()">Limpiar</button>
+                    <span class="search-status" id="searchStatus"></span>
+                </div>
+                <div class="entries-list" id="entriesList"></div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-stats">
+            <div class="stats-grid" id="statsGrid"></div>
+            <div class="card">
+                <div class="card-title"><div class="icon">⚖️</div>Evolución de peso</div>
+                <div class="chart-container"><canvas id="weightChart"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-title"><div class="icon">📏</div>Evolución de altura</div>
+                <div class="chart-container"><canvas id="heightChart"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-title"><div class="icon">⚡</div>Evolución de IMC</div>
+                <div class="chart-container"><canvas id="bmiChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ===== IndexedDB Database Layer =====
+    const DB_NAME = 'FitTrackDB';
+    const DB_VERSION = 1;
+    let db = null;
+    let searchTimeout = null;
+
+    function openDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = (e) => {
+                const database = e.target.result;
+                if (!database.objectStoreNames.contains('entries')) {
+                    const store = database.createObjectStore('entries', { keyPath: 'id', autoIncrement: true });
+                    store.createIndex('entry_date', 'entry_date', { unique: false });
+                    store.createIndex('created_at', 'created_at', { unique: false });
+                }
+            };
+            request.onsuccess = (e) => {
+                db = e.target.result;
+                resolve(db);
+            };
+            request.onerror = (e) => {
+                reject(new Error('Error al abrir la base de datos: ' + e.target.error));
+            };
+        });
+    }
+
+    function dbRequest(req) {
+        return new Promise((resolve, reject) => {
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(new Error(req.error));
+        });
+    }
+
+    function getAllEntries() {
+        return dbTransaction('entries', 'readonly', (store) => dbRequest(store.getAll()));
+    }
+
+    function addEntry(entry) {
+        return dbTransaction('entries', 'readwrite', (store) => {
+            entry.created_at = new Date().toISOString();
+            entry.updated_at = new Date().toISOString();
+            return dbRequest(store.add(entry));
+        });
+    }
+
+    function updateEntry(entry) {
+        return dbTransaction('entries', 'readwrite', (store) => {
+            entry.updated_at = new Date().toISOString();
+            return dbRequest(store.put(entry));
+        });
+    }
+
+    function deleteEntryById(id) {
+        return dbTransaction('entries', 'readwrite', (store) => dbRequest(store.delete(id)));
+    }
+
+    function getEntryById(id) {
+        return dbTransaction('entries', 'readonly', (store) => dbRequest(store.get(id)));
+    }
+
+    function dbTransaction(storeName, mode, storeCallback) {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, mode);
+            const store = tx.objectStore(storeName);
+            const result = storeCallback(store);
+            if (result && typeof result.then === 'function') {
+                result.then(resolve, reject);
+            } else {
+                tx.oncomplete = () => resolve(result);
+                tx.onerror = () => reject(new Error(tx.error));
+            }
+        });
+    }
+
+    // ===== Persistence helpers (localStorage for last entry) =====
+    function getStoredLastEntry() {
+        try {
+            const data = localStorage.getItem('fittrack_last_entry');
+            return data ? JSON.parse(data) : null;
+        } catch { return null; }
+    }
+
+    function storeLastEntry(entry) {
+        try {
+            localStorage.setItem('fittrack_last_entry', JSON.stringify({
+                weight: entry.weight,
+                height: entry.height,
+                date: entry.entry_date
+            }));
+        } catch {}
+    }
+
+    // ===== App State =====
+    let currentPage = 1;
+    const entriesPerPage = 10;
+
+    // ===== Initialization =====
+    async function initApp() {
+        try {
+            await openDB();
+            restoreLastEntry();
+            setTodayDate();
+            validateForm();
+            loadEntries();
+            loadStats();
+            startAutoDateUpdate();
+        } catch (err) {
+            showToast('Error al iniciar: ' + err.message, 'error');
+        }
+    }
+
+    function restoreLastEntry() {
+        const last = getStoredLastEntry();
+        if (last) {
+            document.getElementById('entryWeight').value = last.weight;
+            document.getElementById('entryHeight').value = last.height;
+            document.getElementById('entryWeight').placeholder = last.weight.toFixed(1);
+        }
+    }
+
+    let dateUserModified = false;
+
+    function getTodayStr() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + d;
+    }
+
+    function setTodayDate() {
+        document.getElementById('entryDate').value = getTodayStr();
+        validateForm();
+    }
+
+    function startAutoDateUpdate() {
+        dateUserModified = false;
+
+        function checkAndUpdate() {
+            if (!dateUserModified) {
+                const today = getTodayStr();
+                const currentValue = document.getElementById('entryDate').value;
+                if (currentValue !== today) {
+                    document.getElementById('entryDate').value = today;
+                    validateForm();
+                }
+            }
+        }
+
+        setInterval(checkAndUpdate, 60000);
+        checkAndUpdate();
+
+        const dateInput = document.getElementById('entryDate');
+        dateInput.addEventListener('change', () => { dateUserModified = true; });
+    }
+
+    // ===== Validation =====
+    function validateForm() {
+        let isValid = true;
+        const date = document.getElementById('entryDate').value;
+        const weight = parseFloat(document.getElementById('entryWeight').value);
+        const height = parseFloat(document.getElementById('entryHeight').value);
+        const mood = document.getElementById('entryMood').value;
+
+        clearFieldError('entryDate', 'dateError');
+        clearFieldError('entryWeight', 'weightError');
+        clearFieldError('entryHeight', 'heightError');
+
+        if (date) {
+            const today = new Date();
+            today.setHours(23, 59, 59, 999);
+            const inputDate = new Date(date + 'T00:00:00');
+            if (inputDate > today) {
+                setFieldError('entryDate', 'dateError', 'La fecha no puede ser futura');
+                isValid = false;
+            }
+        }
+
+        const weightStr = document.getElementById('entryWeight').value;
+        if (weightStr) {
+            if (isNaN(weight) || weight < 20 || weight > 400) {
+                setFieldError('entryWeight', 'weightError', 'El peso debe estar entre 20 y 400 kg');
+                isValid = false;
+            }
+        }
+
+        const heightStr = document.getElementById('entryHeight').value;
+        if (heightStr) {
+            if (isNaN(height) || height < 50 || height > 300) {
+                setFieldError('entryHeight', 'heightError', 'La altura debe estar entre 50 y 300 cm');
+                isValid = false;
+            }
+        }
+
+        updateLiveBmi(weight, height);
+
+        const saveBtn = document.getElementById('saveBtn');
+        const hasRequiredValues = date && !isNaN(weight) && !isNaN(height) && mood !== '';
+        saveBtn.disabled = !hasRequiredValues;
+
+        return isValid;
+    }
+
+    function clearFieldError(inputId, errorId) {
+        document.getElementById(inputId).classList.remove('input-error');
+        document.getElementById(errorId).textContent = '';
+    }
+
+    function setFieldError(inputId, errorId, message) {
+        document.getElementById(inputId).classList.add('input-error');
+        document.getElementById(errorId).textContent = message;
+    }
+
+    function updateLiveBmi(weight, height) {
+        const container = document.getElementById('liveBmi');
+        if (!isNaN(weight) && !isNaN(height) && weight > 0 && height > 0) {
+            const bmi = calculateBMI(weight, height);
+            const cat = getBMICategory(bmi);
+            container.innerHTML = '<span class="bmi-live ' + cat.cls + '">⚡ IMC: ' + bmi + ' - ' + cat.label + '</span>';
+        } else {
+            container.innerHTML = '';
+        }
+    }
+
+    function updateCharCounter() {
+        const textarea = document.getElementById('entryNotes');
+        const counter = document.getElementById('charCounter');
+        const len = textarea.value.length;
+        counter.textContent = len + ' / 2000';
+        counter.className = 'char-counter' + (len > 1800 ? ' danger' : len > 1500 ? ' warn' : '');
+    }
+
+    // ===== Save Entry =====
+    async function saveEntry(e) {
+        e.preventDefault();
+
+        validateForm();
+
+        const date = document.getElementById('entryDate').value;
+        const weight = parseFloat(document.getElementById('entryWeight').value);
+        const height = parseFloat(document.getElementById('entryHeight').value);
+        const mood = document.getElementById('entryMood').value;
+        const notes = document.getElementById('entryNotes').value.trim();
+
+        if (!date || isNaN(weight) || isNaN(height)) {
+            showToast('Completa todos los campos obligatorios correctamente', 'error');
+            return false;
+        }
+
+        if (weight < 20 || weight > 400) {
+            setFieldError('entryWeight', 'weightError', 'El peso debe estar entre 20 y 400 kg');
+            return false;
+        }
+        if (height < 50 || height > 300) {
+            setFieldError('entryHeight', 'heightError', 'La altura debe estar entre 50 y 300 cm');
+            return false;
+        }
+
+        try {
+            const allEntries = await getAllEntries();
+            const existing = allEntries.find(entry => entry.entry_date === date);
+
+            if (existing) {
+                existing.weight = weight;
+                existing.height = height;
+                existing.mood = mood;
+                existing.notes = notes;
+                await updateEntry(existing);
+                showToast('Registro actualizado ✓', 'success');
+            } else {
+                await addEntry({ entry_date: date, weight, height, mood, notes });
+                showToast('Registro guardado ✓', 'success');
+            }
+
+            storeLastEntry({ entry_date: date, weight, height });
+
+            // Keep weight/height from last entry
+            if (getStoredLastEntry()) {
+                document.getElementById('entryWeight').value = getStoredLastEntry().weight;
+                document.getElementById('entryHeight').value = getStoredLastEntry().height;
+                document.getElementById('entryWeight').placeholder = getStoredLastEntry().weight.toFixed(1);
+            }
+
+            document.getElementById('entryDate').value = '';
+            document.getElementById('entryMood').value = '';
+            document.getElementById('entryNotes').value = '';
+
+            setTodayDate();
+            clearAllFieldErrors();
+            validateForm();
+            loadEntries();
+            loadStats();
+        } catch (err) {
+            showToast('Error al guardar: ' + err.message, 'error');
+        }
+        return false;
+    }
+
+    function clearAllFieldErrors() {
+        clearFieldError('entryDate', 'dateError');
+        clearFieldError('entryWeight', 'weightError');
+        clearFieldError('entryHeight', 'heightError');
+        document.getElementById('notesError').textContent = '';
+    }
+
+    // ===== BMI helpers =====
+    function calculateBMI(weight, height) {
+        const hM = height / 100;
+        return parseFloat((weight / (hM * hM)).toFixed(1));
+    }
+
+    function getBMICategory(bmi) {
+        if (bmi < 18.5) return { label: 'Bajo peso', cls: 'bmi-underweight' };
+        if (bmi < 25) return { label: 'Normal', cls: 'bmi-normal' };
+        if (bmi < 30) return { label: 'Sobrepeso', cls: 'bmi-overweight' };
+        return { label: 'Obesidad', cls: 'bmi-obese' };
+    }
+
+    // ===== Load Entries =====
+    async function loadEntries() {
+        try {
+            const allEntries = await getAllEntries();
+            allEntries.sort((a, b) => b.entry_date.localeCompare(a.entry_date));
+
+            let filtered = [...allEntries];
+            const from = document.getElementById('filterFrom').value;
+            const to = document.getElementById('filterTo').value;
+            const search = document.getElementById('filterSearch').value.trim().toLowerCase();
+
+            if (from) filtered = filtered.filter(e => e.entry_date >= from);
+            if (to) filtered = filtered.filter(e => e.entry_date <= to);
+            if (search) {
+                filtered = filtered.filter(e =>
+                    (e.notes || '').toLowerCase().includes(search) ||
+                    (e.mood || '').toLowerCase().includes(search)
+                );
+            }
+
+            const statusEl = document.getElementById('searchStatus');
+            if (search) {
+                statusEl.textContent = filtered.length + ' resultado' + (filtered.length !== 1 ? 's' : '');
+            } else {
+                statusEl.textContent = allEntries.length + ' registro' + (allEntries.length !== 1 ? 's' : '');
+            }
+
+            const totalPages = filtered.length > 0 ? Math.ceil(filtered.length / entriesPerPage) : 0;
+            if (currentPage > totalPages) currentPage = totalPages || 1;
+
+            const start = (currentPage - 1) * entriesPerPage;
+            const paged = filtered.slice(start, start + entriesPerPage);
+
+            const container = document.getElementById('entriesList');
+
+            if (paged.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>No hay registros para mostrar</p></div>';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            for (const entry of paged) {
+                const bmi = calculateBMI(entry.weight, entry.height);
+                const bmiCat = getBMICategory(bmi);
+
+                html += '<div class="entry-item">' +
+                    '<div class="entry-header">' +
+                        '<div class="entry-date">' +
+                            '<span class="day-badge">' + formatDateShort(entry.entry_date) + '</span>' +
+                            (entry.mood ? '<span style="color: var(--text-muted); font-size: 0.9rem;">' + entry.mood + '</span>' : '') +
+                        '</div>' +
+                        '<div class="entry-actions">' +
+                            '<button class="btn btn-sm btn-edit" onclick="editEntry(' + entry.id + ')">✏️ Editar</button>' +
+                            '<button class="btn btn-sm btn-danger" onclick="deleteEntry(' + entry.id + ')">🗑️</button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="entry-metrics">' +
+                        '<div class="metric"><div class="metric-icon weight">⚖️</div><span class="metric-value">' + entry.weight.toFixed(1) + ' kg</span></div>' +
+                        '<div class="metric"><div class="metric-icon height">📏</div><span class="metric-value">' + entry.height.toFixed(1) + ' cm</span></div>' +
+                        '<div class="metric"><div class="metric-icon bmi">⚡</div><span class="metric-value">' + bmi + ' <span class="bmi-indicator ' + bmiCat.cls + '">' + bmiCat.label + '</span></span></div>' +
+                    '</div>' +
+                    (entry.notes ? '<div class="entry-notes">"' + entry.notes + '"</div>' : '') +
+                '</div>';
+            }
+            container.innerHTML = html;
+
+            if (totalPages <= 1) {
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            let paginationHtml = '';
+            paginationHtml += '<button ' + (currentPage === 1 ? 'disabled' : '') + ' onclick="goToPage(' + (currentPage - 1) + ')">‹ Anterior</button>';
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (totalPages > 7) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                        paginationHtml += '<button class="' + (i === currentPage ? 'active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+                    } else if (i === currentPage - 2 || i === currentPage + 2) {
+                        paginationHtml += '<button disabled>...</button>';
+                    }
+                } else {
+                    paginationHtml += '<button class="' + (i === currentPage ? 'active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+                }
+            }
+
+            paginationHtml += '<button ' + (currentPage === totalPages ? 'disabled' : '') + ' onclick="goToPage(' + (currentPage + 1) + ')">Siguiente ›</button>';
+            document.getElementById('pagination').innerHTML = paginationHtml;
+        } catch (err) {
+            showToast('Error al cargar registros: ' + err.message, 'error');
+        }
+    }
+
+    function goToPage(page) {
+        currentPage = page;
+        loadEntries();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ===== Debounced Search =====
+    function debouncedSearch() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentPage = 1;
+            loadEntries();
+        }, 300);
+    }
+
+    function clearFilters() {
+        document.getElementById('filterFrom').value = '';
+        document.getElementById('filterTo').value = '';
+        document.getElementById('filterSearch').value = '';
+        currentPage = 1;
+        loadEntries();
+    }
+
+    // ===== Edit Entry =====
+    async function editEntry(id) {
+        try {
+            const entry = await getEntryById(id);
+            const modal = document.getElementById('modalContent');
+            modal.innerHTML =
+                '<h3>✏️ Editar registro</h3>' +
+                '<div class="form-grid" style="grid-template-columns: 1fr;">' +
+                    '<div class="form-group">' +
+                        '<label>Fecha</label>' +
+                        '<input type="date" id="editDate" value="' + entry.entry_date + '" required oninput="validateEditForm()">' +
+                        '<div class="error-msg" id="editDateError"></div>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label>Peso (kg)</label>' +
+                        '<input type="number" id="editWeight" step="0.01" min="20" max="400" value="' + entry.weight + '" required oninput="validateEditForm()">' +
+                        '<div class="error-msg" id="editWeightError"></div>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label>Altura (cm)</label>' +
+                        '<input type="number" id="editHeight" step="0.1" min="50" max="300" value="' + entry.height + '" required oninput="validateEditForm()">' +
+                        '<div class="error-msg" id="editHeightError"></div>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label>Estado de ánimo</label>' +
+                        '<select id="editMood">' +
+                            '<option value="">Seleccionar...</option>' +
+                            '<option value="🔥 Excelente"' + (entry.mood === '🔥 Excelente' ? ' selected' : '') + '>🔥 Excelente</option>' +
+                            '<option value="😊 Bien"' + (entry.mood === '😊 Bien' ? ' selected' : '') + '>😊 Bien</option>' +
+                            '<option value="😐 Regular"' + (entry.mood === '😐 Regular' ? ' selected' : '') + '>😐 Regular</option>' +
+                            '<option value="😔 Mal"' + (entry.mood === '😔 Mal' ? ' selected' : '') + '>😔 Mal</option>' +
+                            '<option value="😴 Cansado"' + (entry.mood === '😴 Cansado' ? ' selected' : '') + '>😴 Cansado</option>' +
+                            '<option value="💪 Fuerte"' + (entry.mood === '💪 Fuerte' ? ' selected' : '') + '>💪 Fuerte</option>' +
+                        '</select>' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label>Notas</label>' +
+                        '<textarea id="editNotes" maxlength="2000">' + (entry.notes || '') + '</textarea>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="modal-actions">' +
+                    '<button class="btn btn-sm" style="background: var(--bg-input); color: var(--text);" onclick="closeModal()">Cancelar</button>' +
+                    '<button class="btn btn-sm btn-primary" style="margin-top:0;" onclick="saveEdit(' + entry.id + ')">Guardar</button>' +
+                '</div>';
+            document.getElementById('modalOverlay').classList.add('show');
+        } catch (err) {
+            showToast('Error al cargar registro: ' + err.message, 'error');
+        }
+    }
+
+    function validateEditForm() {
+        let valid = true;
+        const weight = parseFloat(document.getElementById('editWeight').value);
+        const height = parseFloat(document.getElementById('editHeight').value);
+
+        clearFieldError('editDate', 'editDateError');
+        clearFieldError('editWeight', 'editWeightError');
+        clearFieldError('editHeight', 'editHeightError');
+
+        const date = document.getElementById('editDate').value;
+        if (date) {
+            const today = new Date();
+            today.setHours(23, 59, 59, 999);
+            const inputDate = new Date(date + 'T00:00:00');
+            if (inputDate > today) {
+                setFieldError('editDate', 'editDateError', 'La fecha no puede ser futura');
+                valid = false;
+            }
+        }
+
+        const weightStr = document.getElementById('editWeight').value;
+        if (weightStr && (isNaN(weight) || weight < 20 || weight > 400)) {
+            setFieldError('editWeight', 'editWeightError', 'Debe estar entre 20 y 400 kg');
+            valid = false;
+        }
+
+        const heightStr = document.getElementById('editHeight').value;
+        if (heightStr && (isNaN(height) || height < 50 || height > 300)) {
+            setFieldError('editHeight', 'editHeightError', 'Debe estar entre 50 y 300 cm');
+            valid = false;
+        }
+
+        return valid;
+    }
+
+    async function saveEdit(id) {
+        if (!validateEditForm()) return;
+
+        try {
+            const date = document.getElementById('editDate').value;
+            const weight = parseFloat(document.getElementById('editWeight').value);
+            const height = parseFloat(document.getElementById('editHeight').value);
+            const mood = document.getElementById('editMood').value;
+            const notes = document.getElementById('editNotes').value.trim();
+
+            if (!date || isNaN(weight) || isNaN(height)) {
+                showToast('Completa todos los campos obligatorios', 'error');
+                return;
+            }
+
+            const allEntries = await getAllEntries();
+            const existingWithDate = allEntries.find(e => e.entry_date === date && e.id !== id);
+
+            if (existingWithDate) {
+                showToast('Ya existe un registro para esta fecha. Se actualizará el existente.', 'error');
+                existingWithDate.weight = weight;
+                existingWithDate.height = height;
+                existingWithDate.mood = mood;
+                existingWithDate.notes = notes;
+                await updateEntry(existingWithDate);
+                await deleteEntryById(id);
+            } else {
+                const entry = await getEntryById(id);
+                entry.entry_date = date;
+                entry.weight = weight;
+                entry.height = height;
+                entry.mood = mood;
+                entry.notes = notes;
+                await updateEntry(entry);
+            }
+
+            storeLastEntry({ entry_date: date, weight, height });
+
+            closeModal();
+            showToast('Registro actualizado ✓', 'success');
+            loadEntries();
+            loadStats();
+        } catch (err) {
+            showToast('Error al guardar: ' + err.message, 'error');
+        }
+    }
+
+    // ===== Delete Entry =====
+    async function deleteEntry(id) {
+        const modal = document.getElementById('modalContent');
+        modal.innerHTML =
+            '<h3>🗑️ Eliminar registro</h3>' +
+            '<p style="color: var(--text-muted); margin-bottom: 8px;">¿Estás seguro de que quieres eliminar este registro? Esta acción no se puede deshacer.</p>' +
+            '<div class="modal-actions">' +
+                '<button class="btn btn-sm" style="background: var(--bg-input); color: var(--text);" onclick="closeModal()">Cancelar</button>' +
+                '<button class="btn btn-sm btn-danger" onclick="confirmDelete(' + id + ')">Eliminar</button>' +
+            '</div>';
+        document.getElementById('modalOverlay').classList.add('show');
+    }
+
+    async function confirmDelete(id) {
+        try {
+            await deleteEntryById(id);
+            closeModal();
+            showToast('Registro eliminado', 'error');
+            loadEntries();
+            loadStats();
+        } catch (err) {
+            showToast('Error al eliminar: ' + err.message, 'error');
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('show');
+    }
+
+    // ===== Tab switching =====
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        document.getElementById('tab-' + tabName).classList.add('active');
+        if (tabName === 'stats') loadStats();
+        if (tabName === 'log') {
+            dateUserModified = false;
+            setTodayDate();
+        }
+    }
+
+    // ===== Stats =====
+    async function loadStats() {
+        try {
+            const allEntries = await getAllEntries();
+            allEntries.sort((a, b) => a.entry_date.localeCompare(b.entry_date));
+
+            if (allEntries.length === 0) {
+                document.getElementById('statsGrid').innerHTML = '<div class="empty-state" style="grid-column:1/-1; padding:30px;"><p>No hay datos suficientes para mostrar estadísticas</p></div>';
+                ['weightChart', 'heightChart', 'bmiChart'].forEach(id => {
+                    const canvas = document.getElementById(id);
+                    const ctx = canvas.getContext('2d');
+                    const rect = canvas.parentElement.getBoundingClientRect();
+                    canvas.width = rect.width * 2;
+                    canvas.height = rect.height * 2;
+                    ctx.scale(2, 2);
+                    ctx.fillStyle = '#8892b0'; ctx.font = '14px Segoe UI'; ctx.textAlign = 'center';
+                    ctx.fillText('Registra datos para ver las gráficas', rect.width / 2, rect.height / 2);
+                });
+                return;
+            }
+
+            const weights = allEntries.map(e => e.weight);
+            const heights = allEntries.map(e => e.height);
+            const avgWeight = weights.reduce((a, b) => a + b, 0) / weights.length;
+            const minWeight = Math.min(...weights);
+            const maxWeight = Math.max(...weights);
+            const latestWeight = weights[weights.length - 1];
+            const firstWeight = weights[0];
+            const change = latestWeight - firstWeight;
+            const changePercent = ((change / firstWeight) * 100).toFixed(1);
+            const changeClass = change <= 0 ? 'positive' : 'negative';
+            const changeIcon = change <= 0 ? '↓' : '↑';
+
+            document.getElementById('statsGrid').innerHTML =
+                '<div class="stat-card"><div class="stat-value">' + avgWeight.toFixed(1) + '</div><div class="stat-label">Peso promedio</div></div>' +
+                '<div class="stat-card"><div class="stat-value">' + minWeight.toFixed(1) + '</div><div class="stat-label">Peso mínimo</div></div>' +
+                '<div class="stat-card"><div class="stat-value">' + maxWeight.toFixed(1) + '</div><div class="stat-label">Peso máximo</div></div>' +
+                '<div class="stat-card"><div class="stat-value">' + (change > 0 ? '+' : '') + change.toFixed(1) + ' kg</div><div class="stat-label">Cambio total</div><div class="stat-change ' + changeClass + '">' + changeIcon + ' ' + changePercent + '%</div></div>';
+
+            drawChart('weightChart', allEntries.map(e => e.entry_date), allEntries.map(e => e.weight), '#6c5ce7', 'rgba(108,92,231,');
+            drawChart('heightChart', allEntries.map(e => e.entry_date), allEntries.map(e => e.height), '#00cec9', 'rgba(0,206,201,');
+
+            const bmiData = allEntries.map(e => ({
+                date: e.entry_date,
+                value: parseFloat((e.weight / Math.pow(e.height / 100, 2)).toFixed(1))
+            }));
+            drawBMICanvas('bmiChart', bmiData);
+
+        } catch (err) {
+            showToast('Error al cargar estadísticas: ' + err.message, 'error');
+        }
+    }
+
+    // ===== Charts =====
+    function drawChart(canvasId, labels, values, color, gradientBase) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * 2;
+        canvas.height = rect.height * 2;
+        ctx.scale(2, 2);
+        const W = rect.width;
+        const H = rect.height;
+        ctx.clearRect(0, 0, W, H);
+
+        if (values.length < 2) {
+            ctx.fillStyle = '#8892b0'; ctx.font = '14px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText('Se necesitan al menos 2 registros', W / 2, H / 2);
+            return;
+        }
+
+        const pad = { top: 30, right: 30, bottom: 50, left: 60 };
+        const cW = W - pad.left - pad.right;
+        const cH = H - pad.top - pad.bottom;
+        const minVal = Math.min(...values) - 2;
+        const maxVal = Math.max(...values) + 2;
+        const range = maxVal - minVal || 1;
+
+        const pts = values.map((v, i) => ({
+            x: pad.left + (cW / (values.length - 1)) * i,
+            y: pad.top + cH - ((v - minVal) / range) * cH
+        }));
+
+        ctx.strokeStyle = 'rgba(45,45,74,0.5)'; ctx.lineWidth = 1;
+        for (let i = 0; i <= 5; i++) {
+            const y = pad.top + (cH / 5) * i;
+            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+            const val = maxVal - (range / 5) * i;
+            ctx.fillStyle = '#8892b0'; ctx.font = '11px Segoe UI'; ctx.textAlign = 'right';
+            ctx.fillText(val.toFixed(1), pad.left - 8, y + 4);
+        }
+
+        const gradient = ctx.createLinearGradient(0, pad.top, 0, H - pad.bottom);
+        gradient.addColorStop(0, gradientBase + '0.3)');
+        gradient.addColorStop(1, gradientBase + '0.01)');
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, H - pad.bottom);
+        pts.forEach((p, i) => {
+            if (i === 0) ctx.lineTo(p.x, p.y);
+            else {
+                const prev = pts[i - 1];
+                const cpx = (prev.x + p.x) / 2;
+                ctx.bezierCurveTo(cpx, prev.y, cpx, p.y, p.x, p.y);
+            }
+        });
+        ctx.lineTo(pts[pts.length - 1].x, H - pad.bottom);
+        ctx.closePath();
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        ctx.beginPath();
+        pts.forEach((p, i) => {
+            if (i === 0) ctx.moveTo(p.x, p.y);
+            else {
+                const prev = pts[i - 1];
+                const cpx = (prev.x + p.x) / 2;
+                ctx.bezierCurveTo(cpx, prev.y, cpx, p.y, p.x, p.y);
+            }
+        });
+        ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke();
+
+        pts.forEach((p, i) => {
+            ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = color; ctx.fill();
+            ctx.strokeStyle = '#1a1a2e'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = '#e0e0e0'; ctx.font = 'bold 10px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText(values[i].toFixed(1), p.x, p.y - 12);
+        });
+
+        ctx.fillStyle = '#8892b0'; ctx.font = '10px Segoe UI'; ctx.textAlign = 'center';
+        const step = Math.max(1, Math.floor(labels.length / 8));
+        labels.forEach((label, i) => {
+            if (i % step === 0 || i === labels.length - 1) {
+                const d = new Date(label + 'T00:00:00');
+                const text = d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                ctx.save();
+                ctx.translate(pts[i].x, H - pad.bottom + 16);
+                ctx.rotate(-0.4);
+                ctx.fillText(text, 0, 0);
+                ctx.restore();
+            }
+        });
+    }
+
+    function drawBMICanvas(canvasId, bmiData) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * 2;
+        canvas.height = rect.height * 2;
+        ctx.scale(2, 2);
+        const W = rect.width;
+        const H = rect.height;
+        ctx.clearRect(0, 0, W, H);
+
+        if (bmiData.length < 2) {
+            ctx.fillStyle = '#8892b0'; ctx.font = '14px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText('Se necesitan al menos 2 registros', W / 2, H / 2);
+            return;
+        }
+
+        const pad = { top: 30, right: 30, bottom: 50, left: 60 };
+        const cW = W - pad.left - pad.right;
+        const cH = H - pad.top - pad.bottom;
+        const values = bmiData.map(d => d.value);
+        const minVal = Math.min(...values) - 2;
+        const maxVal = Math.max(...values) + 2;
+        const range = maxVal - minVal || 1;
+
+        const pts = values.map((v, i) => ({
+            x: pad.left + (cW / (values.length - 1)) * i,
+            y: pad.top + cH - ((v - minVal) / range) * cH
+        }));
+
+        const zones = [
+            { min: 0, max: 18.5, color: 'rgba(116,185,255,0.08)' },
+            { min: 18.5, max: 25, color: 'rgba(0,184,148,0.08)' },
+            { min: 25, max: 30, color: 'rgba(253,203,110,0.08)' },
+            { min: 30, max: 100, color: 'rgba(225,112,85,0.08)' }
+        ];
+        zones.forEach(z => {
+            const y1 = pad.top + cH - ((Math.min(z.max, maxVal) - minVal) / range) * cH;
+            const y2 = pad.top + cH - ((Math.max(z.min, minVal) - minVal) / range) * cH;
+            if (y1 < y2) { ctx.fillStyle = z.color; ctx.fillRect(pad.left, y1, cW, y2 - y1); }
+        });
+
+        ctx.strokeStyle = 'rgba(45,45,74,0.5)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+        for (let i = 0; i <= 5; i++) {
+            const y = pad.top + (cH / 5) * i;
+            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        [18.5, 25, 30].forEach(bmi => {
+            if (bmi >= minVal && bmi <= maxVal) {
+                const y = pad.top + cH - ((bmi - minVal) / range) * cH;
+                ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.setLineDash([6,4]);
+                ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = '10px Segoe UI'; ctx.textAlign = 'left';
+                ctx.fillText(bmi, W - pad.right + 4, y + 4);
+            }
+        });
+
+        const gradient = ctx.createLinearGradient(0, pad.top, 0, H - pad.bottom);
+        gradient.addColorStop(0, 'rgba(162,155,254,0.3)');
+        gradient.addColorStop(1, 'rgba(162,155,254,0.01)');
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, H - pad.bottom);
+        pts.forEach((p, i) => {
+            if (i === 0) ctx.lineTo(p.x, p.y);
+            else {
+                const prev = pts[i - 1];
+                const cpx = (prev.x + p.x) / 2;
+                ctx.bezierCurveTo(cpx, prev.y, cpx, p.y, p.x, p.y);
+            }
+        });
+        ctx.lineTo(pts[pts.length - 1].x, H - pad.bottom);
+        ctx.closePath();
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        ctx.beginPath();
+        pts.forEach((p, i) => {
+            if (i === 0) ctx.moveTo(p.x, p.y);
+            else {
+                const prev = pts[i - 1];
+                const cpx = (prev.x + p.x) / 2;
+                ctx.bezierCurveTo(cpx, prev.y, cpx, p.y, p.x, p.y);
+            }
+        });
+        ctx.strokeStyle = '#a29bfe'; ctx.lineWidth = 3; ctx.stroke();
+
+        pts.forEach((p, i) => {
+            ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#a29bfe'; ctx.fill();
+            ctx.strokeStyle = '#1a1a2e'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = '#e0e0e0'; ctx.font = 'bold 10px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText(values[i], p.x, p.y - 12);
+        });
+
+        ctx.fillStyle = '#8892b0'; ctx.font = '10px Segoe UI'; ctx.textAlign = 'center';
+        const step = Math.max(1, Math.floor(bmiData.length / 8));
+        bmiData.forEach((d, i) => {
+            if (i % step === 0 || i === bmiData.length - 1) {
+                const date = new Date(d.date + 'T00:00:00');
+                const text = date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                ctx.save();
+                ctx.translate(pts[i].x, H - pad.bottom + 16);
+                ctx.rotate(-0.4);
+                ctx.fillText(text, 0, 0);
+                ctx.restore();
+            }
+        });
+    }
+
+    // ===== Utilities =====
+    function formatDate(dateStr) {
+        const d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    function formatDateShort(dateStr) {
+        const d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function showToast(message, type) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = 'toast ' + type + ' show';
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ===== Modal close on Escape =====
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
+    });
+
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    // ===== Init =====
+    initApp();
+    </script>
+</body>
+</html>
